@@ -10,6 +10,9 @@
 2019, June:
 	Revised, commented and updated by Dr. Felipe Campelo [fcampelo], Aston University
 	(f.campelo@aston.ac.uk / fcampelo@gmail.com)
+	
+2020, June:
+	Added feature_freq_bands() by Solange Cerny [scerny], Aston University
 """
 
 import numpy as np
@@ -771,7 +774,7 @@ def feature_fft(matrix, period = 1., mains_f = 50.,
 	# Make feature names
 	names = []
 	for i in np.arange(fft_values.shape[1]):
-		names.extend(['topFreq_' + str(j) + "_" + str(i) for j in np.arange(1,11)])
+		names.extend(['topFreq_' + str(j) + "_" + str(i) for j in np.arange(1,ntop+1)])
 	
 	if (get_power_spectrum):
 		ret = np.hstack([ret, fft_values.flatten(order = 'F')])
@@ -933,13 +936,19 @@ def calc_feature_vector(matrix, state):
 	var_names += v
 	var_values = np.hstack([var_values, x])
 	
-	start = time.time() # Performance
-	x, v = feature_fft(matrix)
-	end = time.time() # Performance
-	duration = end - start # Performance
-	performance['feature_fft'] = duration # Performance
-	var_names += v
-	var_values = np.hstack([var_values, x])
+	# excluded on 21-Jun-2020 as per advise of [fcampelo]:
+	#   Features calculated by feature_fft() should be excluded from the pool of attributes. 
+	#   This function should instead be used as a basis to calculate the power distribution of the 
+	#   five frequency *bands* (alpha, beta, gamma, delta and theta) by binning all frequency 
+	#   components into these five bands.
+	#  
+	#start = time.time() # Performance
+	#x, v = feature_fft(matrix)
+	#end = time.time() # Performance
+	#duration = end - start # Performance
+	#performance['feature_fft'] = duration # Performance
+	#var_names += v
+	#var_values = np.hstack([var_values, x])
 	
 	if state != None:
 		var_values = np.hstack([var_values, np.array([state])])
@@ -961,6 +970,117 @@ def calc_feature_vector(matrix, state):
 
 	return var_values, var_names
 
+
+def feature_freq_bands(ffts, names, bins = {
+		'delta_l': 0.0,
+		'delta_h': 4.5,
+		'theta_l': 3.5,
+		'theta_h': 8.5,
+		'alpha_l': 7.5,
+		'alpha_h': 12.5,
+		'beta_l':  11.5,
+		'beta_h':  35.5,
+		'gamma_l': 34.5
+	}):
+	"""
+	Calculates bucket sums for all frequency *bands*  (delta, theta, alpha, beta and gamma) 
+	in that order e.g. lowest frequency first.
+	
+	Parameters:
+		ffts (numpy.ndarray): 1D array containing calculated fft values for all channels
+		names (list): 1D array containing headers associated wit ffts values in  
+		format freq_<XXx>_<ch> where XX.x is frequency with precision of 1 decimal place
+		and ch is a channel index. Keeping correct header format is important as it 
+		controls feature extraction logic.
+		bins (dictionary): dictionary of open interval values for all frequency *bands*
+
+	Returns:
+		numpy.ndarray: 1D array containing bucket sums for all channels
+		list: list containing feature names for the features
+
+	Author:
+		Original: [scerny]
+	"""
+	current_ch_idx = '0'
+	channels = []
+
+	current_ch_x = []
+	current_ch_y = []
+	current_ch_bins = {
+		'delta': [],
+		'theta': [],
+		'alpha': [],
+		'beta':  [],
+		'gamma': []
+	}
+
+	for idx, sample in enumerate(names):
+		splt_sample = sample.split('_')
+
+		if splt_sample[2] != current_ch_idx:
+			channels.append([
+				current_ch_x, 
+				current_ch_y, 
+				current_ch_bins,
+				{
+					'delta': sum(current_ch_bins['delta']),
+					'theta': sum(current_ch_bins['theta']),
+					'alpha': sum(current_ch_bins['alpha']),
+					'beta':  sum(current_ch_bins['beta']),
+					'gamma': sum(current_ch_bins['gamma'])
+				}
+			])
+			current_ch_x = []
+			current_ch_y = []
+			current_ch_bins = {
+				'delta': [],
+				'theta': [],
+				'alpha': [],
+				'beta':  [],
+				'gamma': []
+			}
+
+			current_ch_idx = splt_sample[2]
+
+		x = float(splt_sample[1])/10
+		y = ffts[idx]
+		current_ch_x.append(x)
+		current_ch_y.append(y)
+
+		# binning
+		if x > bins['delta_l'] and x < bins['delta_h']:
+			current_ch_bins['delta'].append(y)
+		if x > bins['theta_l'] and x < bins['theta_h']:
+			current_ch_bins['theta'].append(y)
+		if x > bins['alpha_l'] and x < bins['alpha_h']:
+			current_ch_bins['alpha'].append(y)
+		if x > bins['beta_l'] and x < bins['beta_h']:
+			current_ch_bins['beta'].append(y)
+		if x > bins['gamma_l']:
+			current_ch_bins['gamma'].append(y)
+
+	channels.append([
+		current_ch_x, 
+		current_ch_y, 
+		current_ch_bins,
+		{
+			'delta': sum(current_ch_bins['delta']),
+			'theta': sum(current_ch_bins['theta']),
+			'alpha': sum(current_ch_bins['alpha']),
+			'beta':  sum(current_ch_bins['beta']),
+			'gamma': sum(current_ch_bins['gamma'])
+		}
+	])
+
+	bands = [] # values
+	names = [] # sum_alpha_0
+
+	for idx, channel in enumerate(channels):
+		for key, value in channel[3].items():
+			bands.append(value)
+			names.append('sum_' + key + '_' + str(idx))
+
+	return np.asarray(bands), names
 
 
 """
@@ -1082,12 +1202,45 @@ def generate_feature_vectors_from_samples(file_path, nsamples, period,
 			performance['resample'] = end - start # Performance
 			
 			
+
+
+
+
+			# added on 21-Jun-2020 as per [fcampelo]:
+			#   Features calculated by feature_fft() should be excluded from the pool of attributes. 
+			#   This function should instead be used as a basis to calculate the power distribution of the 
+			#   five frequency *bands* (alpha, beta, gamma, delta and theta) by binning all frequency 
+			#   components into these five bands.
+			#  
+			ret, names = feature_fft(ry, period = 1., mains_f = 50., 
+									filter_mains = True, filter_DC = True,
+									normalise_signals = True,
+									ntop = 0, get_power_spectrum = True)
+
+
+			#timestamp = str(int(time.time()))
+			#np.savetxt("_feature_fft____matrix_"+timestamp+".csv", ry.astype(float), delimiter=",")
+			#np.savetxt("_feature_fft____ret_"+timestamp+".csv", ret.astype(float), delimiter=",")
+			#with open("_feature_fft____names_"+timestamp+".csv", 'w', newline='') as data_file:
+			#	writer = csv.writer(data_file)
+			#	writer.writerow(names)
+
+
+
 			start = time.time() # Performance
 			# Compute the feature vector. We will be appending the features of the 
 			# current time slice and those of the previous one.
 			# If there was no previous vector we just set it and continue 
 			# with the next vector.
-			r, headers = calc_feature_vector(ry, state)
+			#r, headers = calc_feature_vector(ry, state) #TODO: commented by [scerny]
+
+
+			r, headers = feature_freq_bands(ret, names)
+			if state != None:
+				r = np.hstack([r, np.array([state])])
+				headers += ['Label']
+
+
 			end = time.time() # Performance
 			performance['calc_feature_vector'] = end - start # Performance
 			
