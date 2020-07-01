@@ -972,15 +972,15 @@ def calc_feature_vector(matrix, state):
 
 
 def feature_freq_bands(ffts, names, bins = {
-		'delta_l': 0.0,
-		'delta_h': 4.5,
-		'theta_l': 3.5,
-		'theta_h': 8.5,
-		'alpha_l': 7.5,
-		'alpha_h': 12.5,
-		'beta_l':  11.5,
-		'beta_h':  35.5,
-		'gamma_l': 34.5
+		'delta_l': 0.5,
+		'delta_h': 4.0,
+		'theta_l': 4.0,
+		'theta_h': 8.0,
+		'alpha_l': 8.0,
+		'alpha_h': 12.0,
+		'beta_l':  12.0,
+		'beta_h':  35.0,
+		'gamma_l': 35.0
 	}):
 	"""
 	Calculates bucket sums for all frequency *bands*  (delta, theta, alpha, beta and gamma) 
@@ -1048,13 +1048,13 @@ def feature_freq_bands(ffts, names, bins = {
 		current_ch_y.append(y)
 
 		# binning
-		if x > bins['delta_l'] and x < bins['delta_h']:
+		if x > bins['delta_l'] and x <= bins['delta_h']:
 			current_ch_bins['delta'].append(y)
-		if x > bins['theta_l'] and x < bins['theta_h']:
+		if x > bins['theta_l'] and x <= bins['theta_h']:
 			current_ch_bins['theta'].append(y)
-		if x > bins['alpha_l'] and x < bins['alpha_h']:
+		if x > bins['alpha_l'] and x <= bins['alpha_h']:
 			current_ch_bins['alpha'].append(y)
-		if x > bins['beta_l'] and x < bins['beta_h']:
+		if x > bins['beta_l'] and x <= bins['beta_h']:
 			current_ch_bins['beta'].append(y)
 		if x > bins['gamma_l']:
 			current_ch_bins['gamma'].append(y)

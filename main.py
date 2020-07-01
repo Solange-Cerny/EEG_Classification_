@@ -10,6 +10,7 @@ May 2020:
 
 import EEG_generate_training_matrix
 import Build_and_test_classifier
+import EEG_classifiers
 import EEG_preprocessing_utilities
 import time
 import numpy as np
@@ -22,11 +23,12 @@ timestamp = str(int(time.time()))
 to_run = [
          #'jodies_prepro',
          #'jodies_classifier',
-         'seed_prepro_4_chanels_singleFile',
+         #'seed_prepro_4_chanels_singleFile',
          #'seed_prepro_all_chanels_singleFile',
          #'seed_prepro',
          #'remove_redundancies_and_shuffle',
-         #'seed_classifier'
+         #'seed_classifier',
+         'run_all_classifiers_once'
          ]
 
 
@@ -136,3 +138,34 @@ if 'seed_classifier' in to_run:
       clf_output_file="Random_Forest_Classifier_SEED_"+timestamp)
 
    print('Done seed_classifier')
+
+if 'run_all_classifiers_once' in to_run:
+   #training_path = "example_training_matrix_all_chanels_singleFile_"+timestamp+".csv"
+   training_path = "example_training_matrix_all_chanels_singleFile_1593514608.csv"
+
+   EEG_classifiers.run_svm(
+      training_path=training_path, 
+      test_size=0.2, 
+      clf_output_file="SVM_Classifier_SEED_"+timestamp)
+
+   EEG_classifiers.run_knn(
+      training_path=training_path, 
+      test_size=0.2, 
+      clf_output_file="KNN_Classifier_SEED_"+timestamp)
+
+   EEG_classifiers.run_random_forest(
+      training_path=training_path, 
+      test_size=0.2, 
+      clf_output_file="Random_Forest_Classifier_SEED_"+timestamp)
+
+   EEG_classifiers.run_ada_boost(
+      training_path=training_path, 
+      test_size=0.2, 
+      clf_output_file="Ada_Boost_Classifier_SEED_"+timestamp)
+
+   EEG_classifiers.run_mlp(
+      training_path=training_path, 
+      test_size=0.2, 
+      clf_output_file="MLP_Classifier_SEED_"+timestamp)
+
+   print('Done run_all_classifiers_once')
