@@ -51,6 +51,15 @@ def matrix_from_csv_file(file_path):
 
 def matrix_from_mat_file_seed_prepro(file_path):
 	'''
+	1 file --> 1 seesion for 1 person
+		- It contains 15 clips
+		- Labels are always in the same order for the clips(same for all files)
+
+	45 files --> 3 files for each person
+		- 1st number in file name describes the person
+
+	-------------------------------------------------------------------------------------
+	
 	There are fifiteen trials for each experiment. The labels of all trials are 
 
 	1,0,-1,-1,0,1,-1,0,1,1,0,-1,0,1,-1, 
