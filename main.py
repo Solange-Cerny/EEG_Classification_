@@ -28,7 +28,8 @@ to_run = [
          #'seed_prepro',
          #'remove_redundancies_and_shuffle',
          #'seed_classifier',
-         'run_all_classifiers_once'
+         #'run_all_classifiers_once',
+         'seed_prepro_all_chanels_singlePerson_and_classify'
          ]
 
 
@@ -169,3 +170,37 @@ if 'run_all_classifiers_once' in to_run:
       clf_output_file="MLP_Classifier_SEED_"+timestamp)
 
    print('Done run_all_classifiers_once')
+
+
+# preprocess and classify
+
+if 'seed_prepro_all_chanels_singlePerson_and_classify'in to_run:
+   dir_path_train = r"../SEED/Preprocessed_EEG/subject_1_training"
+   dir_path_test = r"../SEED/Preprocessed_EEG/subject_1_test"
+   
+   train_fname = "train_matrix.csv"
+   test_fname = "test_matrix.csv"
+
+   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+      directory_path=dir_path_train, 
+      cols_to_ignore=None, 
+      output_file= dir_path_train + "/" + train_fname)
+
+   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+      directory_path=dir_path_test, 
+      cols_to_ignore=None, 
+      output_file= dir_path_test + "/" + test_fname)
+
+
+
+
+   #TODO: remove redundant columns (features)
+   #TODO: shuffle
+
+
+
+
+   #TODO: run all classifiers here for:  dir_path_test + "/" + test_fname     dir_path_train + "/" + train_fname
+
+   print('Done seed_prepro_all_chanels_singleFile')
+

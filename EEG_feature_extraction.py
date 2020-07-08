@@ -93,9 +93,12 @@ def matrix_from_mat_file_seed_prepro(file_path):
 		   '2' in key: 
 			data, last_neutral_ts = get_data_with_timestamps(raw_mat_data[key], last_neutral_ts + ts_increment)
 			if neutral.size == 0:
-				neutral = data
+				#TODO: Temporarely removing neutrally labelled data
+				#neutral = data
+				pass
 			else:
-				neutral = np.concatenate((neutral, data))
+				#neutral = np.concatenate((neutral, data))
+				pass
 
 		elif '15' in key or \
 		   '12' in key or \
@@ -1241,13 +1244,236 @@ def generate_feature_vectors_from_samples(file_path, nsamples, period,
 			# current time slice and those of the previous one.
 			# If there was no previous vector we just set it and continue 
 			# with the next vector.
-			#r, headers = calc_feature_vector(ry, state) #TODO: commented by [scerny]
+			r, headers = calc_feature_vector(ry, state) #TODO: commented by [scerny]
 
 
-			r, headers = feature_freq_bands(ret, names)
+			x, v = feature_freq_bands(ret, names)
 			if state != None:
-				r = np.hstack([r, np.array([state])])
-				headers += ['Label']
+				x = np.hstack([x, np.array([state])])
+				v += ['Label']
+
+
+			headers += v
+			r = np.hstack([r, x])
+
+
+			end = time.time() # Performance
+			performance['calc_feature_vector'] = end - start # Performance
+			
+			if previous_vector is not None:
+				start = time.time() # Performance
+				# If there is a previous vector, the script concatenates the two 
+				# vectors and adds the result to the output matrix
+				feature_vector = np.hstack([previous_vector, r])
+				end = time.time() # Performance
+				performance['hstack'] = end - start # Performance
+				
+				feat_names = ["lag1_" + s for s in headers[:-1]] + headers
+
+				if os.path.isfile(output_file):
+					start = time.time() # Performance
+					with open(output_file, 'a', newline='') as data_file:
+						writer = csv.writer(data_file)
+						writer.writerow(feature_vector)
+					end = time.time() # Performance
+					performance['vstack-not_instead_file-write'] = end - start # Performance
+				else:
+					with open(output_file, 'w', newline='') as data_file:
+						writer = csv.writer(data_file)
+						writer.writerow(feat_names)
+						writer.writerow(feature_vector)
+					
+			# Store the vector of the previous window
+			previous_vector = r
+			if state is not None:
+				# Remove the label (last column) of previous vector
+				previous_vector = previous_vector[:-1] 
+
+
+			fname = 'main_stats.csv'
+
+			if os.path.isfile(fname):
+				with open(fname, 'a', newline='') as stats_file:
+					writer = csv.DictWriter(stats_file, performance.keys())
+					writer.writerow(performance)
+
+			else:
+				with open(fname, 'w', newline='') as stats_file:
+					writer = csv.DictWriter(stats_file, performance.keys())
+					writer.writeheader()
+					writer.writerow(performance)
+
+
+	fname = 'main_stats.csv'
+
+	if os.path.isfile(fname):
+		with open(fname, 'a', newline='') as stats_file:
+			writer = csv.DictWriter(stats_file, performance.keys())
+			writer.writerow(performance)
+
+	else:
+		with open(fname, 'w', newline='') as stats_file:
+			writer = csv.DictWriter(stats_file, performance.keys())
+			writer.writeheader()
+			writer.writerow(performance)
+
+	'''
+	# Return
+	return ret, feat_names
+	'''
+
+def generate_feature_vectors_from_samples_v2(file_path, nsamples, period, 
+										  state = None, 
+										  remove_redundant = True,
+										  cols_to_ignore = None,
+										  output_file = None):
+	"""
+	Reads data from CSV file in "file_path" and extracts statistical features 
+	for each time window of width "period". 
+	
+	Details:
+	Successive time windows overlap by period / 2. All signals are resampled to 
+	"nsample" points to maintain consistency. Notice that the removal of 
+	redundant features (regulated by "remove_redundant") is based on the 
+	feature names - therefore, if the names output by the other functions in 
+	this script are changed this routine needs to be revised. 
+	
+	Currently the redundant features removed from the lag window are, 
+	for i in [0, nsignals-1]:
+		- mean_q3_i,
+		- mean_q4_i, 
+		- mean_d_q3q4_i,
+		- max_q3_i,
+		- max_q4_i, 
+		- max_d_q3q4_i,
+		- min_q3_i,
+		- min_q4_i, 
+		- min_d_q3q4_i.
+	
+	Parameters:
+		file_path (str): file path to the CSV file containing the records
+		nsamples (int): number of samples to use for each time window. The 
+		signals are down/upsampled to nsamples
+		period (float): desired width of the time windows, in seconds
+		state(str/int/float): label to attribute to the feature vectors
+ 		remove_redundant (bool): Should redundant features be removed from the 
+	    resulting feature vectors (redundant features are those that are 
+	    repeated due to the 1/2 period overlap between consecutive windows).
+		cols_to_ignore (array): array of columns to ignore from the input matrix
+		 
+		
+	Returns:
+		numpy.ndarray: 2D array containing features as columns and time windows 
+		as rows.
+		list: list containing the feature names
+
+	Author:
+		Original: [lmanso]
+		Reimplemented: [fcampelo]
+		Added SEED dataset support: [scerny]
+	"""	
+
+	performance = {} # Performance
+
+	
+	dict_matrix = {}
+
+	start = time.time() # Performance
+	# Read the matrix from file
+	if file_path.lower().endswith('.csv'):
+		matrix = matrix_from_csv_file(file_path)
+		dict_matrix['default'] = matrix
+
+	elif file_path.lower().endswith('.mat'):
+		# This will return array of 3 matrices, one for each state
+		# then below  while True: loop will run 3 times for each state
+		dict_matrix = matrix_from_mat_file_seed_prepro(file_path)
+	end = time.time() # Performance
+	performance['load_file_from_hdd'] = end - start # Performance
+
+	for key, matrix in dict_matrix.items():
+		if key != 'default':
+			# set data label for SEED dataset
+			state = key
+
+		# We will start at the very begining of the file
+		t = 0.
+		
+		# No previous vector is available at the start
+		previous_vector = None
+		
+		# Until an exception is raised or a stop condition is met
+		while True:
+			# Get the next slice from the file (starting at time 't', with a 
+			# duration of 'period'
+			# If an exception is raised or the slice is not as long as we expected, 
+			# return the current data available
+			try:
+				start = time.time() # Performance
+				s, dur = get_time_slice(matrix, start = t, period = period)
+				if cols_to_ignore is not None:
+					s = np.delete(s, cols_to_ignore, axis = 1)
+				end = time.time() # Performance
+				performance['get_time_slice'] = end - start # Performance
+			except IndexError:
+				break
+			if len(s) == 0:
+				break
+			if dur < 0.9 * period:
+				break
+			
+			start = time.time() # Performance
+			# Perform the resampling of the vector
+			ry, rx = scipy.signal.resample(s[:, 1:], num = nsamples, 
+									t = s[:, 0], axis = 0)
+			
+			# Slide the slice by 1/2 period
+			t += 0.5 * period
+			end = time.time() # Performance
+			performance['resample'] = end - start # Performance
+			
+			
+
+
+
+
+			# added on 21-Jun-2020 as per [fcampelo]:
+			#   Features calculated by feature_fft() should be excluded from the pool of attributes. 
+			#   This function should instead be used as a basis to calculate the power distribution of the 
+			#   five frequency *bands* (alpha, beta, gamma, delta and theta) by binning all frequency 
+			#   components into these five bands.
+			#  
+			ret, names = feature_fft(ry, period = 1., mains_f = 50., 
+									filter_mains = True, filter_DC = True,
+									normalise_signals = True,
+									ntop = 0, get_power_spectrum = True)
+
+
+			#timestamp = str(int(time.time()))
+			#np.savetxt("_feature_fft____matrix_"+timestamp+".csv", ry.astype(float), delimiter=",")
+			#np.savetxt("_feature_fft____ret_"+timestamp+".csv", ret.astype(float), delimiter=",")
+			#with open("_feature_fft____names_"+timestamp+".csv", 'w', newline='') as data_file:
+			#	writer = csv.writer(data_file)
+			#	writer.writerow(names)
+
+
+
+			start = time.time() # Performance
+			# Compute the feature vector. We will be appending the features of the 
+			# current time slice and those of the previous one.
+			# If there was no previous vector we just set it and continue 
+			# with the next vector.
+			r, headers = calc_feature_vector(ry, state) #TODO: commented by [scerny]
+
+
+			x, v = feature_freq_bands(ret, names)
+			if state != None:
+				x = np.hstack([x, np.array([state])])
+				v += ['Label']
+
+
+			headers += v
+			r = np.hstack([r, x])
 
 
 			end = time.time() # Performance

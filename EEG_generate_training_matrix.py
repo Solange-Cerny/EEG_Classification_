@@ -20,6 +20,7 @@ import os, sys
 import time
 import numpy as np
 from EEG_feature_extraction import generate_feature_vectors_from_samples
+from EEG_feature_extraction import generate_feature_vectors_from_samples_v2
 
 
 def gen_training_matrix(directory_path, output_file, cols_to_ignore):
@@ -187,8 +188,8 @@ def gen_training_matrix_from_seed_prepro(directory_path, output_file, cols_to_ig
 
 		print (time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time())),'Using file', x)
 		full_file_path = directory_path  +   '/'   + x
-		generate_feature_vectors_from_samples(file_path = full_file_path, 
-															nsamples = 150, 
+		generate_feature_vectors_from_samples_v2(file_path = full_file_path, 
+															nsamples = 128, 
 															period = 1.,
 															state = state,
 															remove_redundant = True,
