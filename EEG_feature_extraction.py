@@ -132,7 +132,7 @@ def matrix_from_mat_file_seed_prepro(file_path):
 
 	return mat_data_prepro
 
-def matrix_from_mat_file_seed_prepro_v2(file_path):
+def matrix_from_mat_file_seed_prepro_v2(file_path, trim_begining_sec=0, trim_end_sec=0):
 	'''
 	1 file --> 1 seesion for 1 person
 		- It contains 15 clips
@@ -168,6 +168,7 @@ def matrix_from_mat_file_seed_prepro_v2(file_path):
 		   '_eeg2' in key: 
 			#TODO: Temporarely removing neutrally labelled data
 			#data = get_data_with_timestamps_v2(raw_mat_data[key])
+			#data = trim_clip(data, trim_begining_sec, trim_end_sec)
 			#neutral.append(data)
 			pass
 
@@ -177,6 +178,7 @@ def matrix_from_mat_file_seed_prepro_v2(file_path):
 		   '_eeg4' in key or \
 		   '_eeg3' in key: 
 			data = get_data_with_timestamps_v2(raw_mat_data[key])
+			data = trim_clip(data, trim_begining_sec, trim_end_sec)
 			negative.append(data) 
 
 		elif '_eeg14' in key or \
@@ -185,6 +187,7 @@ def matrix_from_mat_file_seed_prepro_v2(file_path):
 		   '_eeg6' in key or \
 		   '_eeg1' in key: 
 			data = get_data_with_timestamps_v2(raw_mat_data[key])
+			data = trim_clip(data, trim_begining_sec, trim_end_sec)
 			positive.append(data)
 
 	# check if all lines up correctly
@@ -196,6 +199,7 @@ def matrix_from_mat_file_seed_prepro_v2(file_path):
 	mat_data_prepro['-1'] = negative
 
 	return mat_data_prepro
+
 
 def get_data_with_timestamps(seed_data, initial_timestamp):
 	freq = 200
@@ -237,6 +241,7 @@ def get_data_with_timestamps(seed_data, initial_timestamp):
 
 	return seed_data, timestamps[-1]
 
+
 def get_data_with_timestamps_v2(seed_data):
 	freq = 200
 
@@ -273,6 +278,16 @@ def get_data_with_timestamps_v2(seed_data):
 	#print(seed_data.shape)
 
 	return seed_data
+
+
+def trim_clip(data, trim_begining_sec, trim_end_sec):
+	first_timestamp = data[0,0]
+	last_timestamp = data[-1,0]
+
+	data = data[data[:,0] >= first_timestamp + trim_begining_sec]
+	data = data[data[:,0] <= last_timestamp - trim_end_sec]
+
+	return data
 
 
 def get_time_slice(full_matrix, start = 0., period = 1.):
@@ -1488,7 +1503,7 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 	elif file_path.lower().endswith('.mat'):
 		# This will return array of 3 matrices, one for each state
 		# then below  while True: loop will run 3 times for each state
-		dict_matrix = matrix_from_mat_file_seed_prepro_v2(file_path)
+		dict_matrix = matrix_from_mat_file_seed_prepro_v2(file_path, 25, 60)
 	end = time.time() # Performance
 	performance['load_file_from_hdd'] = end - start # Performance
 
