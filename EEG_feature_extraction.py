@@ -1398,10 +1398,7 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 
 		# We will start at the very begining of the file
 		t = 0.
-		
-		# No previous vector is available at the start
-		previous_vector = None
-		
+
 		# Until an exception is raised or a stop condition is met
 		while True:
 			# Get the next slice from the file (starting at time 't', with a 
@@ -1463,7 +1460,7 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 			# current time slice and those of the previous one.
 			# If there was no previous vector we just set it and continue 
 			# with the next vector.
-			r, headers = calc_feature_vector(ry, state) #TODO: commented by [scerny]
+			r, headers = calc_feature_vector(ry, None) #TODO: commented by [scerny]
 
 
 			x, v = feature_freq_bands(ret, names)
@@ -1479,35 +1476,28 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 			end = time.time() # Performance
 			performance['calc_feature_vector'] = end - start # Performance
 			
-			if previous_vector is not None:
-				start = time.time() # Performance
-				# If there is a previous vector, the script concatenates the two 
-				# vectors and adds the result to the output matrix
-				feature_vector = np.hstack([previous_vector, r])
-				end = time.time() # Performance
-				performance['hstack'] = end - start # Performance
+			start = time.time() # Performance
+			# If there is a previous vector, the script concatenates the two 
+			# vectors and adds the result to the output matrix
+			feature_vector = r
+			end = time.time() # Performance
+			performance['hstack'] = end - start # Performance
 				
-				feat_names = ["lag1_" + s for s in headers[:-1]] + headers
+			feat_names = headers
 
-				if os.path.isfile(output_file):
-					start = time.time() # Performance
-					with open(output_file, 'a', newline='') as data_file:
-						writer = csv.writer(data_file)
-						writer.writerow(feature_vector)
-					end = time.time() # Performance
-					performance['vstack-not_instead_file-write'] = end - start # Performance
-				else:
-					with open(output_file, 'w', newline='') as data_file:
-						writer = csv.writer(data_file)
-						writer.writerow(feat_names)
-						writer.writerow(feature_vector)
+			if os.path.isfile(output_file):
+				start = time.time() # Performance
+				with open(output_file, 'a', newline='') as data_file:
+					writer = csv.writer(data_file)
+					writer.writerow(feature_vector)
+				end = time.time() # Performance
+				performance['vstack-not_instead_file-write'] = end - start # Performance
+			else:
+				with open(output_file, 'w', newline='') as data_file:
+					writer = csv.writer(data_file)
+					writer.writerow(feat_names)
+					writer.writerow(feature_vector)
 					
-			# Store the vector of the previous window
-			previous_vector = r
-			if state is not None:
-				# Remove the label (last column) of previous vector
-				previous_vector = previous_vector[:-1] 
-
 
 			fname = 'main_stats.csv'
 
