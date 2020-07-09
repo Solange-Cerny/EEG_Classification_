@@ -86,11 +86,11 @@ def matrix_from_mat_file_seed_prepro(file_path):
 		if desired_data not in key: 
 			continue
 
-		if '13' in key or \
-		   '11' in key or \
-		   '8' in key or \
-		   '5' in key or \
-		   '2' in key: 
+		if '_eeg13' in key or \
+		   '_eeg11' in key or \
+		   '_eeg8' in key or \
+		   '_eeg5' in key or \
+		   '_eeg2' in key: 
 			data, last_neutral_ts = get_data_with_timestamps(raw_mat_data[key], last_neutral_ts + ts_increment)
 			if neutral.size == 0:
 				#TODO: Temporarely removing neutrally labelled data
@@ -100,22 +100,22 @@ def matrix_from_mat_file_seed_prepro(file_path):
 				#neutral = np.concatenate((neutral, data))
 				pass
 
-		elif '15' in key or \
-		   '12' in key or \
-		   '7' in key or \
-		   '4' in key or \
-		   '3' in key: 
+		elif '_eeg15' in key or \
+		   '_eeg12' in key or \
+		   '_eeg7' in key or \
+		   '_eeg4' in key or \
+		   '_eeg3' in key: 
 			data, last_negative_ts = get_data_with_timestamps(raw_mat_data[key], last_negative_ts + ts_increment)
 			if negative.size == 0:
 				negative = data
 			else:
 				negative = np.concatenate((negative, data))
 
-		elif '14' in key or \
-		   '10' in key or \
-		   '9' in key or \
-		   '6' in key or \
-		   '1' in key: 
+		elif '_eeg14' in key or \
+		   '_eeg10' in key or \
+		   '_eeg9' in key or \
+		   '_eeg6' in key or \
+		   '_eeg1' in key: 
 			data, last_positive_ts = get_data_with_timestamps(raw_mat_data[key], last_positive_ts + ts_increment)
 			if positive.size == 0:
 				positive = data
@@ -132,6 +132,70 @@ def matrix_from_mat_file_seed_prepro(file_path):
 
 	return mat_data_prepro
 
+def matrix_from_mat_file_seed_prepro_v2(file_path):
+	'''
+	1 file --> 1 seesion for 1 person
+		- It contains 15 clips
+		- Labels are always in the same order for the clips(same for all files)
+
+	45 files --> 3 files for each person
+		- 1st number in file name describes the person
+
+	-------------------------------------------------------------------------------------
+	
+	There are fifiteen trials for each experiment. The labels of all trials are 
+
+	1,0,-1,-1,0,1,-1,0,1,1,0,-1,0,1,-1, 
+	
+	where 1 for positive, 0 for neutral and -1 for negative.
+	For more detailed description of this dataset, please see http://bcmi.sjtu.edu.cn/~seed/
+	'''
+	raw_mat_data = scipy.io.loadmat(file_path)
+
+	positive = []
+	neutral = []
+	negative = []
+
+	desired_data = '_eeg'
+	for key in raw_mat_data:
+		if desired_data not in key: 
+			continue
+
+		if '_eeg13' in key or \
+		   '_eeg11' in key or \
+		   '_eeg8' in key or \
+		   '_eeg5' in key or \
+		   '_eeg2' in key: 
+			#TODO: Temporarely removing neutrally labelled data
+			#data = get_data_with_timestamps_v2(raw_mat_data[key])
+			#neutral.append(data)
+			pass
+
+		elif '_eeg15' in key or \
+		   '_eeg12' in key or \
+		   '_eeg7' in key or \
+		   '_eeg4' in key or \
+		   '_eeg3' in key: 
+			data = get_data_with_timestamps_v2(raw_mat_data[key])
+			negative.append(data) 
+
+		elif '_eeg14' in key or \
+		   '_eeg10' in key or \
+		   '_eeg9' in key or \
+		   '_eeg6' in key or \
+		   '_eeg1' in key: 
+			data = get_data_with_timestamps_v2(raw_mat_data[key])
+			positive.append(data)
+
+	# check if all lines up correctly
+	#np.savetxt("raw_seed_all_djc_eeg__timestamp_test.csv", positive, delimiter=",")
+
+	mat_data_prepro = {}
+	mat_data_prepro['1'] = positive
+	mat_data_prepro['0'] = neutral
+	mat_data_prepro['-1'] = negative
+
+	return mat_data_prepro
 
 def get_data_with_timestamps(seed_data, initial_timestamp):
 	freq = 200
@@ -172,6 +236,43 @@ def get_data_with_timestamps(seed_data, initial_timestamp):
 	#print(seed_data.shape)
 
 	return seed_data, timestamps[-1]
+
+def get_data_with_timestamps_v2(seed_data):
+	freq = 200
+
+	# for comparison that all lines up correctly
+	#np.savetxt("raw_seed_djc_eeg1_test.csv", seed_data, delimiter=",")
+
+	# transpose the SEED matrix
+	seed_data = seed_data.T
+
+	# how many rows (samples) are in the file
+	sample_count = seed_data.shape[0]
+
+	# generate timestamps column
+	timestamps = np.arange(0.0, (sample_count/freq), 1/freq)
+
+	# ensure timestamps size isn't bigger or smaller
+	# this ocassionally ocurs when generating range using np.arange()
+	while True:
+		if timestamps.shape[0] > sample_count:
+			timestamps = np.delete(arr=timestamps, obj=timestamps.shape[0]-1, axis=0)
+		elif timestamps.shape[0] < sample_count:
+			print ('Wrong timestamp column length')
+			sys.exit(-1)
+		else:
+			break
+
+	# insert timestamps column at the first position (obj=0)
+	# use column insertion (axis=1)
+	seed_data = np.insert(arr=seed_data, obj=0, values=timestamps, axis=1)
+
+	# check if all lines up correctly
+	#np.savetxt("raw_seed_reshaped_djc_eeg1_test.csv", seed_data, delimiter=",")
+	#print(seed_data)
+	#print(seed_data.shape)
+
+	return seed_data
 
 
 def get_time_slice(full_matrix, start = 0., period = 1.):
@@ -1387,130 +1488,131 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 	elif file_path.lower().endswith('.mat'):
 		# This will return array of 3 matrices, one for each state
 		# then below  while True: loop will run 3 times for each state
-		dict_matrix = matrix_from_mat_file_seed_prepro(file_path)
+		dict_matrix = matrix_from_mat_file_seed_prepro_v2(file_path)
 	end = time.time() # Performance
 	performance['load_file_from_hdd'] = end - start # Performance
 
-	for key, matrix in dict_matrix.items():
+	for key, matrices in dict_matrix.items():
 		if key != 'default':
 			# set data label for SEED dataset
 			state = key
 
-		# We will start at the very begining of the file
-		t = 0.
+		for matrix in matrices:
+			# We will start at the very begining of the file
+			t = 0.
 
-		# Until an exception is raised or a stop condition is met
-		while True:
-			# Get the next slice from the file (starting at time 't', with a 
-			# duration of 'period'
-			# If an exception is raised or the slice is not as long as we expected, 
-			# return the current data available
-			try:
-				start = time.time() # Performance
-				s, dur = get_time_slice(matrix, start = t, period = period)
-				if cols_to_ignore is not None:
-					s = np.delete(s, cols_to_ignore, axis = 1)
-				end = time.time() # Performance
-				performance['get_time_slice'] = end - start # Performance
-			except IndexError:
-				break
-			if len(s) == 0:
-				break
-			if dur < 0.9 * period:
-				break
-			
-			start = time.time() # Performance
-			# Perform the resampling of the vector
-			ry, rx = scipy.signal.resample(s[:, 1:], num = nsamples, 
-									t = s[:, 0], axis = 0)
-			
-			# Slide the slice by 1/2 period
-			t += 0.5 * period
-			end = time.time() # Performance
-			performance['resample'] = end - start # Performance
-			
-			
-
-
-
-
-			# added on 21-Jun-2020 as per [fcampelo]:
-			#   Features calculated by feature_fft() should be excluded from the pool of attributes. 
-			#   This function should instead be used as a basis to calculate the power distribution of the 
-			#   five frequency *bands* (alpha, beta, gamma, delta and theta) by binning all frequency 
-			#   components into these five bands.
-			#  
-			ret, names = feature_fft(ry, period = 1., mains_f = 50., 
-									filter_mains = True, filter_DC = True,
-									normalise_signals = True,
-									ntop = 0, get_power_spectrum = True)
-
-
-			#timestamp = str(int(time.time()))
-			#np.savetxt("_feature_fft____matrix_"+timestamp+".csv", ry.astype(float), delimiter=",")
-			#np.savetxt("_feature_fft____ret_"+timestamp+".csv", ret.astype(float), delimiter=",")
-			#with open("_feature_fft____names_"+timestamp+".csv", 'w', newline='') as data_file:
-			#	writer = csv.writer(data_file)
-			#	writer.writerow(names)
-
-
-
-			start = time.time() # Performance
-			# Compute the feature vector. We will be appending the features of the 
-			# current time slice and those of the previous one.
-			# If there was no previous vector we just set it and continue 
-			# with the next vector.
-			r, headers = calc_feature_vector(ry, None) #TODO: commented by [scerny]
-
-
-			x, v = feature_freq_bands(ret, names)
-			if state != None:
-				x = np.hstack([x, np.array([state])])
-				v += ['Label']
-
-
-			headers += v
-			r = np.hstack([r, x])
-
-
-			end = time.time() # Performance
-			performance['calc_feature_vector'] = end - start # Performance
-			
-			start = time.time() # Performance
-			# If there is a previous vector, the script concatenates the two 
-			# vectors and adds the result to the output matrix
-			feature_vector = r
-			end = time.time() # Performance
-			performance['hstack'] = end - start # Performance
+			# Until an exception is raised or a stop condition is met
+			while True:
+				# Get the next slice from the file (starting at time 't', with a 
+				# duration of 'period'
+				# If an exception is raised or the slice is not as long as we expected, 
+				# return the current data available
+				try:
+					start = time.time() # Performance
+					s, dur = get_time_slice(matrix, start = t, period = period)
+					if cols_to_ignore is not None:
+						s = np.delete(s, cols_to_ignore, axis = 1)
+					end = time.time() # Performance
+					performance['get_time_slice'] = end - start # Performance
+				except IndexError:
+					break
+				if len(s) == 0:
+					break
+				if dur < 0.9 * period:
+					break
 				
-			feat_names = headers
-
-			if os.path.isfile(output_file):
 				start = time.time() # Performance
-				with open(output_file, 'a', newline='') as data_file:
-					writer = csv.writer(data_file)
-					writer.writerow(feature_vector)
+				# Perform the resampling of the vector
+				ry, rx = scipy.signal.resample(s[:, 1:], num = nsamples, 
+										t = s[:, 0], axis = 0)
+				
+				# Slide the slice by 1/2 period
+				t += 0.5 * period
 				end = time.time() # Performance
-				performance['vstack-not_instead_file-write'] = end - start # Performance
-			else:
-				with open(output_file, 'w', newline='') as data_file:
-					writer = csv.writer(data_file)
-					writer.writerow(feat_names)
-					writer.writerow(feature_vector)
+				performance['resample'] = end - start # Performance
+				
+				
+
+
+
+
+				# added on 21-Jun-2020 as per [fcampelo]:
+				#   Features calculated by feature_fft() should be excluded from the pool of attributes. 
+				#   This function should instead be used as a basis to calculate the power distribution of the 
+				#   five frequency *bands* (alpha, beta, gamma, delta and theta) by binning all frequency 
+				#   components into these five bands.
+				#  
+				ret, names = feature_fft(ry, period = 1., mains_f = 50., 
+										filter_mains = True, filter_DC = True,
+										normalise_signals = True,
+										ntop = 0, get_power_spectrum = True)
+
+
+				#timestamp = str(int(time.time()))
+				#np.savetxt("_feature_fft____matrix_"+timestamp+".csv", ry.astype(float), delimiter=",")
+				#np.savetxt("_feature_fft____ret_"+timestamp+".csv", ret.astype(float), delimiter=",")
+				#with open("_feature_fft____names_"+timestamp+".csv", 'w', newline='') as data_file:
+				#	writer = csv.writer(data_file)
+				#	writer.writerow(names)
+
+
+
+				start = time.time() # Performance
+				# Compute the feature vector. We will be appending the features of the 
+				# current time slice and those of the previous one.
+				# If there was no previous vector we just set it and continue 
+				# with the next vector.
+				r, headers = calc_feature_vector(ry, None) #TODO: commented by [scerny]
+
+
+				x, v = feature_freq_bands(ret, names)
+				if state != None:
+					x = np.hstack([x, np.array([state])])
+					v += ['Label']
+
+
+				headers += v
+				r = np.hstack([r, x])
+
+
+				end = time.time() # Performance
+				performance['calc_feature_vector'] = end - start # Performance
+				
+				start = time.time() # Performance
+				# If there is a previous vector, the script concatenates the two 
+				# vectors and adds the result to the output matrix
+				feature_vector = r
+				end = time.time() # Performance
+				performance['hstack'] = end - start # Performance
 					
+				feat_names = headers
 
-			fname = 'main_stats.csv'
+				if os.path.isfile(output_file):
+					start = time.time() # Performance
+					with open(output_file, 'a', newline='') as data_file:
+						writer = csv.writer(data_file)
+						writer.writerow(feature_vector)
+					end = time.time() # Performance
+					performance['vstack-not_instead_file-write'] = end - start # Performance
+				else:
+					with open(output_file, 'w', newline='') as data_file:
+						writer = csv.writer(data_file)
+						writer.writerow(feat_names)
+						writer.writerow(feature_vector)
+						
 
-			if os.path.isfile(fname):
-				with open(fname, 'a', newline='') as stats_file:
-					writer = csv.DictWriter(stats_file, performance.keys())
-					writer.writerow(performance)
+				fname = 'main_stats.csv'
 
-			else:
-				with open(fname, 'w', newline='') as stats_file:
-					writer = csv.DictWriter(stats_file, performance.keys())
-					writer.writeheader()
-					writer.writerow(performance)
+				if os.path.isfile(fname):
+					with open(fname, 'a', newline='') as stats_file:
+						writer = csv.DictWriter(stats_file, performance.keys())
+						writer.writerow(performance)
+
+				else:
+					with open(fname, 'w', newline='') as stats_file:
+						writer = csv.DictWriter(stats_file, performance.keys())
+						writer.writeheader()
+						writer.writerow(performance)
 
 
 	fname = 'main_stats.csv'
