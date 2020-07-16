@@ -13,6 +13,8 @@ import Build_and_test_classifier
 import EEG_classifiers
 import EEG_preprocessing_utilities
 import time
+import csv
+import os.path
 import numpy as np
 
 timestamp = str(int(time.time())) 
@@ -28,8 +30,8 @@ to_run = [
          #'seed_prepro',
          #'remove_redundancies_and_shuffle',
          #'seed_classifier',
-         #'run_all_classifiers_once',
-         'seed_prepro_all_chanels_singlePerson_and_classify'
+         #'seed_prepro_all_chanels_singlePerson',
+         'run_all_classifiers_once',
          ]
 
 
@@ -82,6 +84,25 @@ if 'seed_prepro'in to_run:
       output_file="example_training_matrix_all_chanels_all_files_"+timestamp+".csv")
 
    print('Done seed_prepro')
+
+if 'seed_prepro_all_chanels_singlePerson'in to_run:
+   dir_path_train = r"../SEED/Preprocessed_EEG/subject_1_training"
+   dir_path_test = r"../SEED/Preprocessed_EEG/subject_1_test"
+   
+   train_fname = "train_matrix.csv"
+   test_fname = "test_matrix.csv"
+
+   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+      directory_path=dir_path_train, 
+      cols_to_ignore=None, 
+      output_file= dir_path_train + "/" + train_fname)
+
+   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+      directory_path=dir_path_test, 
+      cols_to_ignore=None, 
+      output_file= dir_path_test + "/" + test_fname)
+
+   print('Done seed_prepro_all_chanels_singlePerson')
 
 
 # redundancies removal
@@ -142,65 +163,78 @@ if 'seed_classifier' in to_run:
 
 if 'run_all_classifiers_once' in to_run:
    #training_path = "example_training_matrix_all_chanels_singleFile_"+timestamp+".csv"
-   training_path = "example_training_matrix_all_chanels_singleFile_1593514608.csv"
+   training_path = "../SEED/Preprocessed_EEG/subject_1_training/train_matrix.csv"
+   resuls_file = "../SEED/Preprocessed_EEG/subject_1_training/results_"+timestamp+".csv"
 
-   EEG_classifiers.run_svm(
+   iter = 1
+   shuffle = True
+
+   svm_acc, svm_mcc, svm_auc = EEG_classifiers.run_svm(
       training_path=training_path, 
       test_size=0.2, 
+      random_seed=iter, 
+      shuffle=shuffle, 
       clf_output_file="SVM_Classifier_SEED_"+timestamp)
 
-   EEG_classifiers.run_knn(
+   knn_acc, knn_mcc, knn_auc = EEG_classifiers.run_knn(
       training_path=training_path, 
       test_size=0.2, 
+      random_seed=iter, 
+      shuffle=shuffle, 
       clf_output_file="KNN_Classifier_SEED_"+timestamp)
 
-   EEG_classifiers.run_random_forest(
+   randf_acc, randf_mcc, randf_auc = EEG_classifiers.run_random_forest(
       training_path=training_path, 
       test_size=0.2, 
+      random_seed=iter, 
+      shuffle=shuffle, 
       clf_output_file="Random_Forest_Classifier_SEED_"+timestamp)
 
-   EEG_classifiers.run_ada_boost(
+   adab_acc, adab_mcc, adab_auc = EEG_classifiers.run_ada_boost(
       training_path=training_path, 
       test_size=0.2, 
+      random_seed=iter, 
+      shuffle=shuffle, 
       clf_output_file="Ada_Boost_Classifier_SEED_"+timestamp)
 
-   EEG_classifiers.run_mlp(
+   mlp_acc, mlp_mcc, mlp_auc = EEG_classifiers.run_mlp(
       training_path=training_path, 
       test_size=0.2, 
+      random_seed=iter, 
+      shuffle=shuffle, 
       clf_output_file="MLP_Classifier_SEED_"+timestamp)
 
+
+   # CSV table for single run
+   ##########################
+   with open(resuls_file, 'w') as f:
+      f.write('Classifier,acc,mcc,auc\n')
+      f.write('SVM,' + str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + '\n')
+      f.write('KNN,' + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + '\n')
+      f.write('Random Forest,' + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + '\n')
+      f.write('ADA B,' + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + '\n')
+      f.write('MLP,' + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+
+   # CSV table for multi run
+   #########################
+   if os.path.isfile(resuls_file + '_multi.csv'):
+      with open(resuls_file + '_multi.csv', 'a') as f:
+         f.write(str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + ','
+            + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + ','
+            + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + ','
+            + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + ','
+            + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+   else:
+      with open(resuls_file + '_multi.csv', 'w') as f:
+         f.write('svm_acc, svm_mcc, svm_auc, '
+            + 'knn_acc, knn_mcc, knn_auc, '
+            + 'randf_acc, randf_mcc, '
+            + 'randf_auc, adab_acc, adab_mcc, '
+            + 'adab_auc, mlp_acc, mlp_mcc, mlp_auc\n')
+         f.write(str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + ','
+            + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + ','
+            + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + ','
+            + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + ','
+            + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+
    print('Done run_all_classifiers_once')
-
-
-# preprocess and classify
-
-if 'seed_prepro_all_chanels_singlePerson_and_classify'in to_run:
-   dir_path_train = r"../SEED/Preprocessed_EEG/subject_1_training"
-   dir_path_test = r"../SEED/Preprocessed_EEG/subject_1_test"
-   
-   train_fname = "train_matrix.csv"
-   test_fname = "test_matrix.csv"
-
-   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
-      directory_path=dir_path_train, 
-      cols_to_ignore=None, 
-      output_file= dir_path_train + "/" + train_fname)
-
-   EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
-      directory_path=dir_path_test, 
-      cols_to_ignore=None, 
-      output_file= dir_path_test + "/" + test_fname)
-
-
-
-
-   #TODO: remove redundant columns (features)
-   #TODO: shuffle
-
-
-
-
-   #TODO: run all classifiers here for:  dir_path_test + "/" + test_fname     dir_path_train + "/" + train_fname
-
-   print('Done seed_prepro_all_chanels_singleFile')
-

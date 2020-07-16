@@ -32,7 +32,7 @@ def build_classifier(training_path, test_size, clf_output_file):
 
     # Feature selection
     # Note: feature selection is based on the entire dataset
-    selected_features = fs.feature_selection(training_path)
+    selected_features = fs.run_select_k_best(training_path)
     # Create new dataset containing only selected features
     feature_names_plus_label = selected_features.copy()
     feature_names_plus_label.append("Label")

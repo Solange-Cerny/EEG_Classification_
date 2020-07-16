@@ -1083,7 +1083,7 @@ def calc_feature_vector(matrix, state):
 		var_names += ['Label']
 
 
-	fname = 'feature_stats.csv'
+	fname = 'data/feature_stats.csv'
 
 	if os.path.isfile(fname):
 		with open(fname, 'a', newline='') as stats_file:
@@ -1406,7 +1406,7 @@ def generate_feature_vectors_from_samples(file_path, nsamples, period,
 				previous_vector = previous_vector[:-1] 
 
 
-			fname = 'main_stats.csv'
+			fname = 'data/main_stats.csv'
 
 			if os.path.isfile(fname):
 				with open(fname, 'a', newline='') as stats_file:
@@ -1420,7 +1420,7 @@ def generate_feature_vectors_from_samples(file_path, nsamples, period,
 					writer.writerow(performance)
 
 
-	fname = 'main_stats.csv'
+	fname = 'data/main_stats.csv'
 
 	if os.path.isfile(fname):
 		with open(fname, 'a', newline='') as stats_file:
@@ -1616,7 +1616,7 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 						writer.writerow(feature_vector)
 						
 
-				fname = 'main_stats.csv'
+				fname = 'data/main_stats.csv'
 
 				if os.path.isfile(fname):
 					with open(fname, 'a', newline='') as stats_file:
@@ -1630,7 +1630,7 @@ def generate_feature_vectors_from_samples_v2(file_path, nsamples, period,
 						writer.writerow(performance)
 
 
-	fname = 'main_stats.csv'
+	fname = 'data/main_stats.csv'
 
 	if os.path.isfile(fname):
 		with open(fname, 'a', newline='') as stats_file:
