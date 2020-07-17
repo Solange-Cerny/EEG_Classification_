@@ -86,6 +86,7 @@ def run_svm(training_path, test_size, random_seed, shuffle, clf_output_file):
     end = time.time() # Performance
     print('SVM predict in: ' + str(end - start)) # Performance
 
+    # Performance measurements
     start = time.time() # Performance
     svm_acc = accuracy_score(y_test, y_predict)
     svm_mcc = matthews_corrcoef(y_test, y_predict)
@@ -150,6 +151,7 @@ def run_knn(training_path, test_size, random_seed, shuffle, clf_output_file):
     end = time.time() # Performance
     print('KNN predict in: ' + str(end - start)) # Performance
 
+    # Performance measurements
     start = time.time() # Performance
     knn_acc = accuracy_score(y_test, y_predict)
     knn_mcc = matthews_corrcoef(y_test, y_predict)
@@ -214,6 +216,7 @@ def run_random_forest(training_path, test_size, random_seed, shuffle, clf_output
     end = time.time() # Performance
     print('Random Forest predict in: ' + str(end - start)) # Performance
 
+    # Performance measurements
     start = time.time() # Performance
     randf_acc = accuracy_score(y_test, y_predict)
     randf_mcc = matthews_corrcoef(y_test, y_predict)
@@ -278,6 +281,7 @@ def run_ada_boost(training_path, test_size, random_seed, shuffle, clf_output_fil
     end = time.time() # Performance
     print('ADA B predict in: ' + str(end - start)) # Performance
 
+    # Performance measurements
     start = time.time() # Performance
     adab_acc = accuracy_score(y_test, y_predict)
     adab_mcc = matthews_corrcoef(y_test, y_predict)
@@ -342,6 +346,7 @@ def run_mlp(training_path, test_size, random_seed, shuffle, clf_output_file):
     end = time.time() # Performance
     print('MLP predict in: ' + str(end - start)) # Performance
 
+    # Performance measurements
     start = time.time() # Performance
     mlp_acc = accuracy_score(y_test, y_predict)
     mlp_mcc = matthews_corrcoef(y_test, y_predict)
