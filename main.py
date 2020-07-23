@@ -169,41 +169,31 @@ if 'run_all_classifiers_once' in to_run:
    iter = 1
    shuffle = True
 
-   svm_acc, svm_mcc, svm_auc = EEG_classifiers.run_svm(
+   x_train, x_test, y_train, y_test = EEG_classifiers.load_data(
       training_path=training_path, 
       test_size=0.2, 
       random_seed=iter, 
-      shuffle=shuffle, 
-      clf_output_file="SVM_Classifier_SEED_"+timestamp)
-
-   knn_acc, knn_mcc, knn_auc = EEG_classifiers.run_knn(
-      training_path=training_path, 
-      test_size=0.2, 
-      random_seed=iter, 
-      shuffle=shuffle, 
-      clf_output_file="KNN_Classifier_SEED_"+timestamp)
-
-   randf_acc, randf_mcc, randf_auc = EEG_classifiers.run_random_forest(
-      training_path=training_path, 
-      test_size=0.2, 
-      random_seed=iter, 
-      shuffle=shuffle, 
-      clf_output_file="Random_Forest_Classifier_SEED_"+timestamp)
-
-   adab_acc, adab_mcc, adab_auc = EEG_classifiers.run_ada_boost(
-      training_path=training_path, 
-      test_size=0.2, 
-      random_seed=iter, 
-      shuffle=shuffle, 
-      clf_output_file="Ada_Boost_Classifier_SEED_"+timestamp)
+      shuffle=shuffle)
 
    mlp_acc, mlp_mcc, mlp_auc = EEG_classifiers.run_mlp(
-      training_path=training_path, 
-      test_size=0.2, 
-      random_seed=iter, 
-      shuffle=shuffle, 
-      clf_output_file="MLP_Classifier_SEED_"+timestamp)
+      "MLP_Classifier_SEED_"+timestamp,
+      x_train, x_test, y_train, y_test)
 
+   svm_acc, svm_mcc, svm_auc = EEG_classifiers.run_svm(
+      "SVM_Classifier_SEED_"+timestamp,
+      x_train, x_test, y_train, y_test)
+
+   knn_acc, knn_mcc, knn_auc = EEG_classifiers.run_knn(
+      "KNN_Classifier_SEED_"+timestamp,
+      x_train, x_test, y_train, y_test)
+
+   randf_acc, randf_mcc, randf_auc = EEG_classifiers.run_random_forest(
+      "Random_Forest_Classifier_SEED_"+timestamp,
+      x_train, x_test, y_train, y_test)
+
+   adab_acc, adab_mcc, adab_auc = EEG_classifiers.run_ada_boost(
+      "Ada_Boost_Classifier_SEED_"+timestamp,
+      x_train, x_test, y_train, y_test)
 
    # CSV table for single run
    ##########################

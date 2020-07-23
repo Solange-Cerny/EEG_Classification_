@@ -27,7 +27,7 @@ import time
 
 
 
-def run_svm(training_path, test_size, random_seed, shuffle, clf_output_file):
+def run_svm(clf_output_file, x_train, x_test, y_train, y_test):
     """
     Builds and saves a trained support vector machine classifier.
     :param training_path: String
@@ -37,39 +37,6 @@ def run_svm(training_path, test_size, random_seed, shuffle, clf_output_file):
     :param clf_output_file: String
         Name of file to save the classifier to.
     """
-
-
-
-    # Load dataset into pandas.DataFrame
-    start = time.time() # Performance
-    data = pd.read_csv(training_path)
-    end = time.time() # Performance
-    print('SVM file loaded in: ' + str(end - start)) # Performance
-
-    # Feature selection
-    # Note: feature selection is based on the entire dataset
-    start = time.time() # Performance
-    selected_features = fs.run_select_percentile(training_path)
-    # Create new dataset containing only selected features
-    feature_names_plus_label = selected_features.copy()
-    feature_names_plus_label.append("Label")
-    selected_data = data[feature_names_plus_label].copy()
-    end = time.time() # Performance
-    print('SVM feature selection in: ' + str(end - start)) # Performance
-
-
-    # debug - to check what fatures got actually promoted
-    #with open('promoted_features.csv', 'w', newline='') as data_file:
-    #    writer = csv.writer(data_file)
-    #    writer.writerow(selected_features)
-
-
-
-    # Split dataset into train and test (x is data, y is labels)
-    start = time.time() # Performance
-    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
-    end = time.time() # Performance
-    print('SVM train/test split in: ' + str(end - start)) # Performance
 
     # Train Support Vector Machine classifier
     start = time.time() # Performance
@@ -81,18 +48,12 @@ def run_svm(training_path, test_size, random_seed, shuffle, clf_output_file):
     print('SVM train & save model in: ' + str(end - start)) # Performance
 
     # Predict on the testing data
-    start = time.time() # Performance
     y_predict = clf.predict(x_test)
-    end = time.time() # Performance
-    print('SVM predict in: ' + str(end - start)) # Performance
 
     # Performance measurements
-    start = time.time() # Performance
     svm_acc = accuracy_score(y_test, y_predict)
     svm_mcc = matthews_corrcoef(y_test, y_predict)
     svm_auc = roc_auc_score(y_test, y_predict)
-    end = time.time() # Performance
-    print('SVM calculate metrics: ' + str(end - start)) # Performance
     
     print("SVM classifier:")
     print("acc: " + str(svm_acc))
@@ -102,7 +63,7 @@ def run_svm(training_path, test_size, random_seed, shuffle, clf_output_file):
     return svm_acc, svm_mcc, svm_auc
 
 
-def run_knn(training_path, test_size, random_seed, shuffle, clf_output_file):
+def run_knn(clf_output_file, x_train, x_test, y_train, y_test):
     """
     Builds and saves a trained K nearest neighbour classifier.
     :param training_path: String
@@ -112,29 +73,6 @@ def run_knn(training_path, test_size, random_seed, shuffle, clf_output_file):
     :param clf_output_file: String
         Name of file to save the classifier to.
     """
-
-    # Load dataset into pandas.DataFrame
-    start = time.time() # Performance
-    data = pd.read_csv(training_path)
-    end = time.time() # Performance
-    print('KNN file loaded in: ' + str(end - start)) # Performance
-
-    # Feature selection
-    # Note: feature selection is based on the entire dataset
-    start = time.time() # Performance
-    selected_features = fs.run_select_percentile(training_path)
-    # Create new dataset containing only selected features
-    feature_names_plus_label = selected_features.copy()
-    feature_names_plus_label.append("Label")
-    selected_data = data[feature_names_plus_label].copy()
-    end = time.time() # Performance
-    print('KNN feature selection in: ' + str(end - start)) # Performance
-
-    # Split dataset into train and test (x is data, y is labels)
-    start = time.time() # Performance
-    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
-    end = time.time() # Performance
-    print('KNN train/test split in: ' + str(end - start)) # Performance
 
     # Train K Nearest Neighbour classifier
     start = time.time() # Performance
@@ -146,18 +84,12 @@ def run_knn(training_path, test_size, random_seed, shuffle, clf_output_file):
     print('KNN train & save model in: ' + str(end - start)) # Performance
 
     # Predict on the testing data
-    start = time.time() # Performance
     y_predict = clf.predict(x_test)
-    end = time.time() # Performance
-    print('KNN predict in: ' + str(end - start)) # Performance
 
     # Performance measurements
-    start = time.time() # Performance
     knn_acc = accuracy_score(y_test, y_predict)
     knn_mcc = matthews_corrcoef(y_test, y_predict)
     knn_auc = roc_auc_score(y_test, y_predict)
-    end = time.time() # Performance
-    print('KNN calculate metrics: ' + str(end - start)) # Performance
     
     print("KNN classifier:")
     print("acc: " + str(knn_acc))
@@ -167,7 +99,7 @@ def run_knn(training_path, test_size, random_seed, shuffle, clf_output_file):
     return knn_acc, knn_mcc, knn_auc
 
 
-def run_random_forest(training_path, test_size, random_seed, shuffle, clf_output_file):
+def run_random_forest(clf_output_file, x_train, x_test, y_train, y_test):
     """
     Builds and saves a trained random forest classifier.
     :param training_path: String
@@ -177,29 +109,6 @@ def run_random_forest(training_path, test_size, random_seed, shuffle, clf_output
     :param clf_output_file: String
         Name of file to save the classifier to.
     """
-
-    # Load dataset into pandas.DataFrame
-    start = time.time() # Performance
-    data = pd.read_csv(training_path)
-    end = time.time() # Performance
-    print('Random Forest file loaded in: ' + str(end - start)) # Performance
-
-    # Feature selection
-    start = time.time() # Performance
-    # Note: feature selection is based on the entire dataset
-    selected_features = fs.run_select_percentile(training_path)
-    # Create new dataset containing only selected features
-    feature_names_plus_label = selected_features.copy()
-    feature_names_plus_label.append("Label")
-    selected_data = data[feature_names_plus_label].copy()
-    end = time.time() # Performance
-    print('Random Forest feature selection in: ' + str(end - start)) # Performance
-
-    # Split dataset into train and test (x is data, y is labels)
-    start = time.time() # Performance
-    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
-    end = time.time() # Performance
-    print('Random Forest train/test split in: ' + str(end - start)) # Performance
 
     # Train Random Forest classifier
     start = time.time() # Performance
@@ -211,18 +120,12 @@ def run_random_forest(training_path, test_size, random_seed, shuffle, clf_output
     print('Random Forest train & save model in: ' + str(end - start)) # Performance
 
     # Predict on the testing data
-    start = time.time() # Performance
     y_predict = clf.predict(x_test)
-    end = time.time() # Performance
-    print('Random Forest predict in: ' + str(end - start)) # Performance
 
     # Performance measurements
-    start = time.time() # Performance
     randf_acc = accuracy_score(y_test, y_predict)
     randf_mcc = matthews_corrcoef(y_test, y_predict)
     randf_auc = roc_auc_score(y_test, y_predict)
-    end = time.time() # Performance
-    print('Random Forest calculate metrics: ' + str(end - start)) # Performance
     
     print("Random Forest classifier:")
     print("acc: " + str(randf_acc))
@@ -232,7 +135,7 @@ def run_random_forest(training_path, test_size, random_seed, shuffle, clf_output
     return randf_acc, randf_mcc, randf_auc
 
 
-def run_ada_boost(training_path, test_size, random_seed, shuffle, clf_output_file):
+def run_ada_boost(clf_output_file, x_train, x_test, y_train, y_test):
     """
     Builds and saves a trained AdaBoost classifier.
     :param training_path: String
@@ -242,29 +145,6 @@ def run_ada_boost(training_path, test_size, random_seed, shuffle, clf_output_fil
     :param clf_output_file: String
         Name of file to save the classifier to.
     """
-
-    # Load dataset into pandas.DataFrame
-    start = time.time() # Performance
-    data = pd.read_csv(training_path)
-    end = time.time() # Performance
-    print('ADA B file loaded in: ' + str(end - start)) # Performance
-
-    # Feature selection
-    # Note: feature selection is based on the entire dataset
-    start = time.time() # Performance
-    selected_features = fs.run_select_percentile(training_path)
-    # Create new dataset containing only selected features
-    feature_names_plus_label = selected_features.copy()
-    feature_names_plus_label.append("Label")
-    selected_data = data[feature_names_plus_label].copy()
-    end = time.time() # Performance
-    print('ADA B feature selection in: ' + str(end - start)) # Performance
-
-    # Split dataset into train and test (x is data, y is labels)
-    start = time.time() # Performance
-    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
-    end = time.time() # Performance
-    print('ADA B train/test split in: ' + str(end - start)) # Performance
 
     # Train Random Forest classifier
     start = time.time() # Performance
@@ -276,18 +156,12 @@ def run_ada_boost(training_path, test_size, random_seed, shuffle, clf_output_fil
     print('ADA B train & save model in: ' + str(end - start)) # Performance
 
     # Predict on the testing data
-    start = time.time() # Performance
     y_predict = clf.predict(x_test)
-    end = time.time() # Performance
-    print('ADA B predict in: ' + str(end - start)) # Performance
 
     # Performance measurements
-    start = time.time() # Performance
     adab_acc = accuracy_score(y_test, y_predict)
     adab_mcc = matthews_corrcoef(y_test, y_predict)
     adab_auc = roc_auc_score(y_test, y_predict)
-    end = time.time() # Performance
-    print('ADA B calculate metrics: ' + str(end - start)) # Performance
     
     print("ADA B classifier:")
     print("acc: " + str(adab_acc))
@@ -297,7 +171,7 @@ def run_ada_boost(training_path, test_size, random_seed, shuffle, clf_output_fil
     return adab_acc, adab_mcc, adab_auc
 
 
-def run_mlp(training_path, test_size, random_seed, shuffle, clf_output_file):
+def run_mlp(clf_output_file, x_train, x_test, y_train, y_test):
     """
     Builds and saves a trained multi layer perceptron classifier.
     :param training_path: String
@@ -308,32 +182,10 @@ def run_mlp(training_path, test_size, random_seed, shuffle, clf_output_file):
         Name of file to save the classifier to.
     """
 
-    # Load dataset into pandas.DataFrame
-    start = time.time() # Performance
-    data = pd.read_csv(training_path)
-    end = time.time() # Performance
-    print('MLP file loaded in: ' + str(end - start)) # Performance
-
-    # Feature selection
-    # Note: feature selection is based on the entire dataset
-    start = time.time() # Performance
-    selected_features = fs.run_select_percentile(training_path)
-    # Create new dataset containing only selected features
-    feature_names_plus_label = selected_features.copy()
-    feature_names_plus_label.append("Label")
-    selected_data = data[feature_names_plus_label].copy()
-    end = time.time() # Performance
-    print('MLP feature selection in: ' + str(end - start)) # Performance
-
-    # Split dataset into train and test (x is data, y is labels)
-    start = time.time() # Performance
-    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
-    end = time.time() # Performance
-    print('MLP train/test split in: ' + str(end - start)) # Performance
-
     # Train Multi Layer Perceptron classifier
     start = time.time() # Performance
-    clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+    #clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+    clf = MLPClassifier()
     clf = clf.fit(x_train, y_train)
     # Save the model
     joblib.dump(clf, clf_output_file)
@@ -341,18 +193,12 @@ def run_mlp(training_path, test_size, random_seed, shuffle, clf_output_file):
     print('MLP train & save model in: ' + str(end - start)) # Performance
 
     # Predict on the testing data
-    start = time.time() # Performance
     y_predict = clf.predict(x_test)
-    end = time.time() # Performance
-    print('MLP predict in: ' + str(end - start)) # Performance
 
     # Performance measurements
-    start = time.time() # Performance
     mlp_acc = accuracy_score(y_test, y_predict)
     mlp_mcc = matthews_corrcoef(y_test, y_predict)
     mlp_auc = roc_auc_score(y_test, y_predict)
-    end = time.time() # Performance
-    print('MLP calculate metrics: ' + str(end - start)) # Performance
     
     print("MLP classifier:")
     print("acc: " + str(mlp_acc))
@@ -378,4 +224,36 @@ def split_dataset(dataset, test_size, random_seed, shuffle):
 
     return x_train, x_test, y_train, y_test
 
+def load_data(training_path, test_size, random_seed, shuffle):
+    # Load dataset into pandas.DataFrame
+    data = pd.read_csv(training_path)
 
+    # Feature selection
+    # Note: feature selection is based on the entire dataset
+    selected_features = fs.run_select_percentile(training_path)
+    # Create new dataset containing only selected features
+    feature_names_plus_label = selected_features.copy()
+    feature_names_plus_label.append("Label")
+    selected_data = data[feature_names_plus_label].copy()
+
+
+    # debug - to check what fatures got actually promoted
+    #with open('promoted_features.csv', 'w', newline='') as data_file:
+    #    writer = csv.writer(data_file)
+    #    writer.writerow(selected_features)
+
+
+
+    # Split dataset into train and test (x is data, y is labels)
+    x_train, x_test, y_train, y_test = split_dataset(selected_data, test_size, random_seed, shuffle)
+
+
+    # Confirming MLP bug in acc
+    #print(type(y_test.values))
+    #print(y_test.values)
+
+    #with open('aaa.csv', 'w', newline='') as data_file:
+    #    writer = csv.writer(data_file)
+    #    writer.writerow(y_test.values)
+
+    return x_train, x_test, y_train, y_test
