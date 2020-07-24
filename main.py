@@ -31,7 +31,9 @@ to_run = [
          #'remove_redundancies_and_shuffle',
          #'seed_classifier',
          #'seed_prepro_all_chanels_singlePerson',
-         'run_all_classifiers_once',
+         #'run_all_classifiers_once_1_subject',
+         #'seed_prepro_all_chanels_allPeople',
+         'run_all_classifiers_once_all_subjects'
          ]
 
 
@@ -104,6 +106,59 @@ if 'seed_prepro_all_chanels_singlePerson'in to_run:
 
    print('Done seed_prepro_all_chanels_singlePerson')
 
+if 'seed_prepro_all_chanels_allPeople'in to_run:
+   subject_files = [['../SEED/Preprocessed_EEG/subject_1_training',
+                     '../SEED/Preprocessed_EEG/subject_1_test'],
+                    ['../SEED/Preprocessed_EEG/subject_2_training',
+                     '../SEED/Preprocessed_EEG/subject_2_test'],
+                    ['../SEED/Preprocessed_EEG/subject_3_training',
+                     '../SEED/Preprocessed_EEG/subject_3_test'],
+                    ['../SEED/Preprocessed_EEG/subject_4_training',
+                     '../SEED/Preprocessed_EEG/subject_4_test'],
+                    ['../SEED/Preprocessed_EEG/subject_5_training',
+                     '../SEED/Preprocessed_EEG/subject_5_test'],
+                    ['../SEED/Preprocessed_EEG/subject_6_training',
+                     '../SEED/Preprocessed_EEG/subject_6_test'],
+                    ['../SEED/Preprocessed_EEG/subject_7_training',
+                     '../SEED/Preprocessed_EEG/subject_7_test'],
+                    ['../SEED/Preprocessed_EEG/subject_8_training',
+                     '../SEED/Preprocessed_EEG/subject_8_test'],
+                    ['../SEED/Preprocessed_EEG/subject_9_training',
+                     '../SEED/Preprocessed_EEG/subject_9_test'],
+                    ['../SEED/Preprocessed_EEG/subject_10_training',
+                     '../SEED/Preprocessed_EEG/subject_10_test'],
+                    ['../SEED/Preprocessed_EEG/subject_11_training',
+                     '../SEED/Preprocessed_EEG/subject_11_test'],
+                    ['../SEED/Preprocessed_EEG/subject_12_training',
+                     '../SEED/Preprocessed_EEG/subject_12_test'],
+                    ['../SEED/Preprocessed_EEG/subject_13_training',
+                     '../SEED/Preprocessed_EEG/subject_13_test'],
+                    ['../SEED/Preprocessed_EEG/subject_14_training',
+                     '../SEED/Preprocessed_EEG/subject_14_test'],
+                    ['../SEED/Preprocessed_EEG/subject_15_training',
+                     '../SEED/Preprocessed_EEG/subject_15_test']]
+
+   iter = 1
+   shuffle = True
+
+   for subject in subject_files:
+      print('Loading ' + str(subject))
+   
+      train_fname = "train_matrix.csv"
+      test_fname = "test_matrix.csv"
+
+      EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+         directory_path=subject[0], 
+         cols_to_ignore=None, 
+         output_file= subject[0] + "/" + train_fname)
+
+      EEG_generate_training_matrix.gen_training_matrix_from_seed_prepro(
+         directory_path=subject[1], 
+         cols_to_ignore=None, 
+         output_file= subject[1] + "/" + test_fname)
+
+   print('Done seed_prepro_all_chanels_allPeople')
+
 
 # redundancies removal
 
@@ -161,19 +216,24 @@ if 'seed_classifier' in to_run:
 
    print('Done seed_classifier')
 
-if 'run_all_classifiers_once' in to_run:
+if 'run_all_classifiers_once_1_subject' in to_run:
    #training_path = "example_training_matrix_all_chanels_singleFile_"+timestamp+".csv"
    training_path = "../SEED/Preprocessed_EEG/subject_1_training/train_matrix.csv"
+   test_path = "../SEED/Preprocessed_EEG/subject_1_test/test_matrix.csv"
    resuls_file = "../SEED/Preprocessed_EEG/subject_1_training/results_"+timestamp+".csv"
 
    iter = 1
    shuffle = True
 
-   x_train, x_test, y_train, y_test = EEG_classifiers.load_data(
+   #x_train, x_test, y_train, y_test = EEG_classifiers.load_data_one_file_split(
+   #   training_path=training_path, 
+   #   test_size=0.2, 
+   #   random_seed=iter, 
+   #   shuffle=shuffle)
+
+   x_train, x_test, y_train, y_test = EEG_classifiers.load_data_two_files(
       training_path=training_path, 
-      test_size=0.2, 
-      random_seed=iter, 
-      shuffle=shuffle)
+      test_path=test_path)
 
    mlp_acc, mlp_mcc, mlp_auc = EEG_classifiers.run_mlp(
       "MLP_Classifier_SEED_"+timestamp,
@@ -227,4 +287,100 @@ if 'run_all_classifiers_once' in to_run:
             + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + ','
             + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
 
-   print('Done run_all_classifiers_once')
+   print('Done run_all_classifiers_once_1_subject')
+
+if 'run_all_classifiers_once_all_subjects' in to_run:
+   subject_files = [['../SEED/Preprocessed_EEG/subject_1_training',
+                     '../SEED/Preprocessed_EEG/subject_1_test'],
+                    ['../SEED/Preprocessed_EEG/subject_2_training',
+                     '../SEED/Preprocessed_EEG/subject_2_test'],
+                    ['../SEED/Preprocessed_EEG/subject_3_training',
+                     '../SEED/Preprocessed_EEG/subject_3_test'],
+                    ['../SEED/Preprocessed_EEG/subject_4_training',
+                     '../SEED/Preprocessed_EEG/subject_4_test'],
+                    ['../SEED/Preprocessed_EEG/subject_5_training',
+                     '../SEED/Preprocessed_EEG/subject_5_test'],
+                    ['../SEED/Preprocessed_EEG/subject_6_training',
+                     '../SEED/Preprocessed_EEG/subject_6_test'],
+                    ['../SEED/Preprocessed_EEG/subject_7_training',
+                     '../SEED/Preprocessed_EEG/subject_7_test'],
+                    ['../SEED/Preprocessed_EEG/subject_8_training',
+                     '../SEED/Preprocessed_EEG/subject_8_test'],
+                    ['../SEED/Preprocessed_EEG/subject_9_training',
+                     '../SEED/Preprocessed_EEG/subject_9_test'],
+                    ['../SEED/Preprocessed_EEG/subject_10_training',
+                     '../SEED/Preprocessed_EEG/subject_10_test'],
+                    ['../SEED/Preprocessed_EEG/subject_11_training',
+                     '../SEED/Preprocessed_EEG/subject_11_test'],
+                    ['../SEED/Preprocessed_EEG/subject_12_training',
+                     '../SEED/Preprocessed_EEG/subject_12_test'],
+                    ['../SEED/Preprocessed_EEG/subject_13_training',
+                     '../SEED/Preprocessed_EEG/subject_13_test'],
+                    ['../SEED/Preprocessed_EEG/subject_14_training',
+                     '../SEED/Preprocessed_EEG/subject_14_test'],
+                    ['../SEED/Preprocessed_EEG/subject_15_training',
+                     '../SEED/Preprocessed_EEG/subject_15_test']]
+
+   iter = 1
+   shuffle = True
+
+   for subject in subject_files:
+      print('Loading ' + str(subject))
+
+      x_train, x_test, y_train, y_test = EEG_classifiers.load_data_two_files(
+         training_path=subject[0] + '/train_matrix.csv', 
+         test_path=subject[1] + '/test_matrix.csv')
+
+      mlp_acc, mlp_mcc, mlp_auc = EEG_classifiers.run_mlp(
+         "MLP_Classifier_SEED_"+timestamp,
+         x_train, x_test, y_train, y_test)
+
+      svm_acc, svm_mcc, svm_auc = EEG_classifiers.run_svm(
+         "SVM_Classifier_SEED_"+timestamp,
+         x_train, x_test, y_train, y_test)
+
+      knn_acc, knn_mcc, knn_auc = EEG_classifiers.run_knn(
+         "KNN_Classifier_SEED_"+timestamp,
+         x_train, x_test, y_train, y_test)
+
+      randf_acc, randf_mcc, randf_auc = EEG_classifiers.run_random_forest(
+         "Random_Forest_Classifier_SEED_"+timestamp,
+         x_train, x_test, y_train, y_test)
+
+      adab_acc, adab_mcc, adab_auc = EEG_classifiers.run_ada_boost(
+         "Ada_Boost_Classifier_SEED_"+timestamp,
+         x_train, x_test, y_train, y_test)
+
+      # CSV table for single run
+      ##########################
+      with open(subject[1]+'/results_'+timestamp+'.csv', 'w') as f:
+         f.write('Classifier,acc,mcc,auc\n')
+         f.write('SVM,' + str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + '\n')
+         f.write('KNN,' + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + '\n')
+         f.write('Random Forest,' + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + '\n')
+         f.write('ADA B,' + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + '\n')
+         f.write('MLP,' + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+
+      # CSV table for multi run
+      #########################
+      if os.path.isfile('results_multi_'+timestamp+'.csv'):
+         with open('results_multi_'+timestamp+'.csv', 'a') as f:
+            f.write(str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + ','
+               + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + ','
+               + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + ','
+               + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + ','
+               + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+      else:
+         with open('results_multi_'+timestamp+'.csv', 'w') as f:
+            f.write('svm_acc, svm_mcc, svm_auc, '
+               + 'knn_acc, knn_mcc, knn_auc, '
+               + 'randf_acc, randf_mcc, '
+               + 'randf_auc, adab_acc, adab_mcc, '
+               + 'adab_auc, mlp_acc, mlp_mcc, mlp_auc\n')
+            f.write(str(svm_acc) + ',' + str(svm_mcc) + ',' + str(svm_auc) + ','
+               + str(knn_acc) + ',' + str(knn_mcc) + ',' + str(knn_auc) + ','
+               + str(randf_acc) + ',' + str(randf_mcc) + ',' + str(randf_auc) + ','
+               + str(adab_acc) + ',' + str(adab_mcc) + ',' + str(adab_auc) + ','
+               + str(mlp_acc) + ',' + str(mlp_mcc) + ',' + str(mlp_auc) + '\n')
+
+   print('Done run_all_classifiers_once_all_subjects')

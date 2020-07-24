@@ -224,7 +224,7 @@ def split_dataset(dataset, test_size, random_seed, shuffle):
 
     return x_train, x_test, y_train, y_test
 
-def load_data(training_path, test_size, random_seed, shuffle):
+def load_data_one_file_split(training_path, test_size, random_seed, shuffle):
     # Load dataset into pandas.DataFrame
     data = pd.read_csv(training_path)
 
@@ -255,5 +255,33 @@ def load_data(training_path, test_size, random_seed, shuffle):
     #with open('aaa.csv', 'w', newline='') as data_file:
     #    writer = csv.writer(data_file)
     #    writer.writerow(y_test.values)
+
+    return x_train, x_test, y_train, y_test
+
+def load_data_two_files(training_path, test_path):
+    # Load dataset into pandas.DataFrame
+    train_data = pd.read_csv(training_path)
+    test_data = pd.read_csv(test_path)
+
+    # Feature selection
+    # Note: feature selection is based on the entire dataset
+    selected_features = fs.run_select_percentile(training_path)
+    # Create new train dataset containing only selected features
+    feature_names_plus_label = selected_features.copy()
+    feature_names_plus_label.append("Label")
+    selected_train_data = train_data[feature_names_plus_label].copy()
+
+    # Persist selected features for future statistical analysis
+    with open(training_path + 'promoted_features.csv', 'w', newline='') as data_file:
+        writer = csv.writer(data_file)
+        writer.writerow(feature_names_plus_label)
+
+    x_train = selected_train_data.iloc[:, 0:-2]
+    y_train = selected_train_data.iloc[:, -1]
+
+    # Create new test dataset containing only selected features
+    selected_test_data = test_data[feature_names_plus_label].copy()
+    x_test = selected_test_data.iloc[:, 0:-2]
+    y_test = selected_test_data.iloc[:, -1]
 
     return x_train, x_test, y_train, y_test
